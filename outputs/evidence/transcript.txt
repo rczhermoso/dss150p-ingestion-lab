@@ -1,0 +1,28 @@
+@"
+Ingestion transcript
+====================
+
+# First run
+PS> python src/run_ingest.py all
+files: 3 written, 0 skipped
+api: read=122 written=120 dups=2 watermark None -> 2026-08-21T10:00:00
+
+# Idempotent rerun
+PS> python src/run_ingest.py all
+files: 0 written, 3 skipped
+api: read=0 written=0 dups=0 watermark 2026-08-21T10:00:00 -> 2026-08-21T10:00:00
+
+# Failure (API server stopped)
+PS> python src/run_ingest.py api
+RuntimeError: Request failed on page 1: ConnectionRefusedError (WinError 10061)
+(status=failure row written to pipeline_runs.csv; watermark unchanged)
+
+# Postgres inspection (bounded)
+PS> docker exec dss150p-lab2-postgres psql -U dss150p -d dss150p -c "\d support_tickets"
+PS> docker exec dss150p-lab2-postgres psql -U dss150p -d dss150p -c "SELECT COUNT(*) FROM support_tickets;"
+count: 250
+
+# API pagination (from profiling)
+Pages visited: [1, 2, 3, 4, 5, 6, 7]
+Total records fetched: 122
+"@ | Out-File -Encoding utf8 outputs\evidence\transcript.txt
