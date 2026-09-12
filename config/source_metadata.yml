@@ -1,0 +1,173 @@
+# Source metadata inventory
+# One record per source. Evidence for each field comes from the
+# corresponding report in outputs/profiling_*.md.
+
+version: 1
+generated: "2026-09-12"
+
+sources:
+
+  customers_csv:
+    name: customers
+    owner: "data-platform@example.org (placeholder)"
+    source_type: csv_file
+    location: "data/customers.csv"
+    description: >
+      Customer master list with contact and segmentation attributes.
+    record_count: 250
+    schema_summary:
+      columns:
+        - {name: customer_id,       type: string}
+        - {name: first_name,        type: string}
+        - {name: last_name,         type: string}
+        - {name: email,             type: string, nullable: true}
+        - {name: city,              type: string, nullable: true}
+        - {name: signup_date,       type: date}
+        - {name: customer_segment,  type: string, categorical: true}
+    candidate_key: customer_id
+    key_uniqueness: false        # 3 duplicated IDs
+    update_pattern: "Full snapshot (unknown cadence)"
+    known_quality_issues:
+      - "customer_id is not unique (C0036, C0090, C0145 each appear twice)."
+      - "Two exact duplicate rows."
+      - "email has 3 nulls; city has 2 nulls."
+    acquisition_method: "File copy + SHA-256 manifest"
+    validation_checks:
+      - "customer_id must be non-null."
+      - "email, if present, must match a basic address pattern."
+      - "signup_date must parse as ISO date and not be in the future."
+      - "customer_segment in {SME, Retail, Professional, Student}."
+    profile_report: "outputs/profiling_customers.md"
+
+  orders_json:
+    name: orders
+    owner: "orders-team@example.org (placeholder)"
+    source_type: json_file
+    location: "data/orders.json"
+    description: >
+      Order records including monetary totals and nested shipping detail.
+    record_count: 250
+    schema_summary:
+      root: list
+      fields:
+        - {name: order_id,        type: string}
+        - {name: customer_id,     type: string}
+        - {name: order_timestamp, type: timestamp}
+        - {name: status,          type: string, categorical: true}
+        - {name: item_count,      type: integer}
+        - {name: subtotal,        type: number}
+        - {name: shipping_fee,    type: number}
+        - {name: total_amount,    type: number}
+        - name: shipping
+          type: object
+          fields:
+            - {name: method, type: string}
+            - {name: region, type: string}
+    candidate_key: order_id
+    key_uniqueness: unknown       # not verified in profiling
+    update_pattern: "Full snapshot (unknown cadence)"
+    known_quality_issues:
+      - "Nested shipping object must be preserved in the raw layer."
+    acquisition_method: "File copy + SHA-256 manifest"
+    validation_checks:
+      - "order_timestamp must parse as ISO-8601."
+      - "item_count >= 0."
+      - "status in {Pending, Packed, Shipped, Delivered, Cancelled, Paid}."
+      - "shipping.region and shipping.method must be non-null strings."
+    profile_report: "outputs/profiling_orders.md"
+
+  products_parquet:
+    name: products
+    owner: "catalog-team@example.org (placeholder)"
+    source_type: parquet_file
+    location: "data/products.parquet"
+    description: >
+      Product catalog with pricing, stock, and category information.
+    record_count: 200
+    schema_summary:
+      columns:
+        - {name: product_id,     type: string, not_null: true}
+        - {name: product_name,   type: string, not_null: true}
+        - {name: category,       type: string, not_null: true, categorical: true}
+        - {name: brand,          type: string, not_null: true, categorical: true}
+        - {name: unit_price,     type: number, not_null: true}
+        - {name: stock_quantity, type: int32,  not_null: true}
+        - {name: weight_kg,      type: number, not_null: true}
+    candidate_key: product_id
+    key_uniqueness: unknown
+    update_pattern: "Full snapshot (unknown cadence)"
+    known_quality_issues:
+      - "None observed at the schema level; all columns NOT NULL."
+    acquisition_method: "File copy + SHA-256 manifest"
+    validation_checks:
+      - "unit_price >= 0."
+      - "stock_quantity >= 0."
+      - "weight_kg >= 0."
+    profile_report: "outputs/profiling_products.md"
+
+  api_events:
+    name: events
+    owner: "api-team@example.org (placeholder)"
+    source_type: rest_api
+    location: "http://127.0.0.1:8000/api/events"
+    description: >
+      Event stream keyed by event_id, with corrections re-emitted under
+      the same event_id and a newer updated_at.
+    record_count: 122
+    schema_summary:
+      fields:
+        - {name: event_id,    type: string}
+        - {name: customer_id, type: string}
+        - {name: event_type,  type: string, categorical: true}
+        - {name: amount,      type: number}
+        - {name: updated_at,  type: timestamp}
+        - name: metadata
+          type: object
+          fields:
+            - {name: channel,  type: string}
+            - {name: campaign, type: string}
+    candidate_key: event_id
+    key_uniqueness: false        # 2 IDs deliberately repeated
+    update_pattern: "Incremental; new and corrected events arrive over time"
+    known_quality_issues:
+      - "Two event_ids repeat with newer updated_at (last-write-wins required)."
+    acquisition_method: "Paginated GET (page, per_page) with updated_after filter"
+    validation_checks:
+      - "event_id must be non-null."
+      - "updated_at must parse as ISO-8601."
+      - "amount must be numeric (>= 0)."
+    profile_report: "outputs/profiling_api.md"
+
+  postgres_support_tickets:
+    name: support_tickets
+    owner: "support-ops@example.org (placeholder)"
+    source_type: postgres_table
+    location: "dss150p.public.support_tickets @ dss150p-lab2-postgres"
+    description: >
+      Support tickets with status, priority, category, and assignment.
+    record_count: 250
+    schema_summary:
+      columns:
+        - {name: ticket_id,      type: integer,        not_null: true, pk: true}
+        - {name: customer_id,    type: varchar(10),    not_null: true}
+        - {name: category,       type: varchar(40),    not_null: true, categorical: true}
+        - {name: priority,       type: varchar(10),    not_null: true, categorical: true}
+        - {name: assigned_agent, type: varchar(80),    nullable: true}
+        - {name: opened_at,      type: timestamp,      not_null: true}
+        - {name: resolved_at,    type: timestamp,      nullable: true}
+        - {name: status,         type: varchar(20),    not_null: true, categorical: true}
+    candidate_key: ticket_id
+    key_uniqueness: true
+    update_pattern: "Incremental; tickets mutate as their status changes"
+    known_quality_issues:
+      - "assigned_agent has 4 nulls."
+      - "resolved_at is NULL whenever status is Open or In Progress."
+    acquisition_method: "Inspection only in this lab; CDC/timestamp-based incremental proposed"
+    validation_checks:
+      - "opened_at must not be in the future."
+      - "resolved_at, if present, must be >= opened_at."
+      - "resolved_at must be NULL when status in {Open, In Progress}."
+      - "status in {Closed, In Progress, Open, Resolved}."
+      - "priority in {High, Low, Medium}."
+      - "category in {Account, Billing, Delivery, Product, Technical}."
+    profile_report: "outputs/profiling_support_tickets.md"
