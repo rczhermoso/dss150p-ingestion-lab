@@ -1,0 +1,88 @@
+# Logical schemas for selected sources.
+# "logical_type" is the semantically correct type, which may differ from
+# how the value arrives in the source file.
+
+version: 1
+
+schemas:
+
+  customers:
+    description: "Customer master list."
+    source: "data/customers.csv"
+    fields:
+      - name: customer_id
+        logical_type: string
+        nullable: false
+        key_role: candidate_key
+        definition: "Opaque customer identifier. Not unique in the source."
+      - name: first_name
+        logical_type: string
+        nullable: false
+        key_role: none
+        definition: "Customer given name as supplied."
+      - name: last_name
+        logical_type: string
+        nullable: false
+        key_role: none
+        definition: "Customer family name as supplied."
+      - name: email
+        logical_type: string
+        nullable: true
+        key_role: none
+        definition: "Contact email address. Null when not provided."
+      - name: city
+        logical_type: string
+        nullable: true
+        key_role: none
+        definition: "Billing city. Null when not provided."
+      - name: signup_date
+        logical_type: date
+        nullable: false
+        key_role: none
+        definition: >
+          Date the customer first registered. Arrives as ISO-8601 text
+          in the CSV but represents a date logically.
+      - name: customer_segment
+        logical_type: string (categorical)
+        nullable: false
+        key_role: none
+        definition: "Segment. One of SME, Retail, Professional, Student."
+
+  api_events:
+    description: "Event stream keyed by event_id."
+    source: "http://127.0.0.1:8000/api/events"
+    fields:
+      - name: event_id
+        logical_type: string
+        nullable: false
+        key_role: logical_key
+        definition: >
+          Logical key. May appear more than once; later versions are
+          identified by a larger updated_at.
+      - name: customer_id
+        logical_type: string
+        nullable: false
+        key_role: foreign_key
+        definition: "References customers.customer_id."
+      - name: event_type
+        logical_type: string (categorical)
+        nullable: false
+        key_role: none
+        definition: "Event kind (e.g. page_view)."
+      - name: amount
+        logical_type: decimal
+        nullable: false
+        key_role: none
+        definition: "Monetary amount associated with the event."
+      - name: updated_at
+        logical_type: timestamp (no tz)
+        nullable: false
+        key_role: watermark
+        definition: >
+          Version timestamp. Arrives as ISO-8601 text in JSON but
+          represents a naive timestamp. Used as the ingestion watermark.
+      - name: metadata
+        logical_type: object
+        nullable: false
+        key_role: none
+        definition: "Nested {channel, campaign} object. Preserved as-is."
