@@ -1,0 +1,92 @@
+# Data contract: customers
+# Producer and consumer agreement for the customers dataset.
+
+name: customers
+description: >
+  Customer master list containing identifiers, contact information,
+  and segmentation attributes.
+
+owner:
+  producer: "crm-team@example.org (placeholder)"
+  consumer: "data-platform@example.org (placeholder)"
+  escalation: "data-platform-oncall@example.org (placeholder)"
+
+primary_key: null              # No field is unique in the source.
+candidate_key: customer_id     # Unique in principle; violated in practice.
+
+delivery:
+  cadence: "Full snapshot; cadence unspecified in the source."
+  availability: "Delivered as a CSV file in data/customers.csv."
+
+fields:
+  - name: customer_id
+    logical_type: string
+    nullable: false
+    unique: false              # 3 duplicate IDs observed.
+    definition: "Opaque customer identifier."
+  - name: first_name
+    logical_type: string
+    nullable: false
+    unique: false
+    definition: "Given name."
+  - name: last_name
+    logical_type: string
+    nullable: false
+    unique: false
+    definition: "Family name."
+  - name: email
+    logical_type: string
+    nullable: true
+    unique: false
+    definition: "Contact email."
+  - name: city
+    logical_type: string
+    nullable: true
+    unique: false
+    definition: "Billing city."
+  - name: signup_date
+    logical_type: date
+    nullable: false
+    unique: false
+    definition: "Signup date; arrives as ISO-8601 text."
+  - name: customer_segment
+    logical_type: string (categorical)
+    nullable: false
+    unique: false
+    definition: "One of SME, Retail, Professional, Student."
+
+quality_rules:
+  - id: Q1
+    rule: "customer_id must be non-null."
+    on_violation: reject_record
+  - id: Q2
+    rule: "customer_id must be unique across the batch."
+    on_violation: quarantine_record
+    note: "Known to be violated in the current source (3 duplicated IDs)."
+  - id: Q3
+    rule: "email, when present, must match ^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$."
+    on_violation: quarantine_record
+  - id: Q4
+    rule: "signup_date must parse as an ISO-8601 date and not be in the future."
+    on_violation: reject_record
+  - id: Q5
+    rule: "customer_segment must be one of {SME, Retail, Professional, Student}."
+    on_violation: reject_record
+  - id: Q6
+    rule: "first_name and last_name must be non-empty strings."
+    on_violation: reject_record
+
+schema_change_notification:
+  expectation: >
+    Producer notifies the consumer at least 5 business days before any
+    change to field name, type, or nullability.
+  channel: "crm-team@example.org (placeholder)"
+
+ingestion:
+  approach: full                # The source is a full snapshot.
+  justification: >
+    customers.csv represents the complete customer list on each
+    delivery. There is no reliable incremental signal (no updated_at,
+    no monotonic ID with guaranteed monotonic ordering, no CDC feed).
+    A full ingest per delivery is therefore both simpler and correct.
+    Deduplication, if required, belongs to a later lifecycle stage.
