@@ -1,0 +1,11 @@
+run_id,started_at,ended_at,status,source,records_read,records_written,duplicates_removed,watermark_before,watermark_after,error_message
+f3e7fbe7edae,2026-09-12T12:52:05.667608Z,2026-09-12T12:52:06.358319Z,success,all,122,120,2,,2026-08-21T10:00:00,
+b686d93be620,2026-09-12T12:52:14.450513Z,2026-09-12T12:52:14.920476Z,success,all,0,0,0,2026-08-21T10:00:00,2026-08-21T10:00:00,
+9ecb4454412e,2026-09-12T12:52:23.623686Z,2026-09-12T12:52:24.065338Z,success,all,122,120,2,,2026-08-21T10:00:00,
+3b22e7cb0c40,2026-09-12T12:52:31.806590Z,2026-09-12T12:52:31.954008Z,success,api,0,0,0,2026-08-21T10:00:00,2026-08-21T10:00:00,
+8d2529274291,2026-09-12T12:55:05.306134Z,2026-09-12T12:55:05.338613Z,success,files,0,0,0,,,
+1485355d7d85,2026-09-12T12:58:10.544378Z,2026-09-12T12:58:12.723146Z,failure,all,0,0,0,,,"Request failed on page 1: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/events?page=1&per_page=20&updated_after=2026-08-21T10%3A00%3A00 (Caused by NewConnectionError(""HTTPConnection(host='127.0.0.1', port=8000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it""))"
+db0e4f163651,2026-09-12T13:01:31.992445Z,2026-09-12T13:01:34.082870Z,failure,all,0,0,0,,,"Request failed on page 1: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/events?page=1&per_page=20&updated_after=2026-08-21T10%3A00%3A00 (Caused by NewConnectionError(""HTTPConnection(host='127.0.0.1', port=8000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it""))"
+2d115b7f0421,2026-09-12T13:06:37.570422Z,2026-09-12T13:06:37.739177Z,success,api,0,0,0,2026-08-21T10:00:00,2026-08-21T10:00:00,
+5c7ce8322b3f,2026-09-12T13:06:58.805822Z,2026-09-12T13:06:58.961595Z,success,api,0,0,0,2026-08-21T10:00:00,2026-08-21T10:00:00,
+b7c464f26aa3,2026-09-12T13:07:29.504896Z,2026-09-12T13:07:29.732668Z,success,api,0,0,0,2026-08-21T10:00:00,2026-08-21T10:00:00,

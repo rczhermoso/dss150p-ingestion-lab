@@ -1,0 +1,24 @@
+@"
+Idempotency demonstration (Task 3.6)
+=====================================
+
+BEFORE rerun:
+  api lines:        120
+  manifest entries: 3
+  watermark:        2026-08-21T10:00:00
+
+Rerun (sources unchanged):
+  files: 0 written, 3 skipped
+  api:   read=0 written=0 dups=0
+  watermark: unchanged
+
+AFTER rerun:
+  api lines:        120
+  manifest entries: 3
+  watermark:        2026-08-21T10:00:00
+
+Verdict: IDEMPOTENT. No duplicate logical events, no duplicate raw
+copies, no watermark advancement.
+"@ | Out-File -Encoding utf8 outputs\evidence\idempotency.txt
+
+Write-Host "wrote outputs\evidence\idempotency.txt"
